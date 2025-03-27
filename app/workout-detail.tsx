@@ -1,28 +1,18 @@
 "use client"
 
-import { useState } from "react"
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  SafeAreaView,
-  StatusBar,
-  Alert,
-} from "react-native"
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, StatusBar, Alert } from "react-native"
 import { useWorkoutContext } from "@/context/WorkoutContext"
 import { useRouter, useLocalSearchParams } from "expo-router"
-import { ChevronLeft, Dumbbell, Play, Trash2 } from "lucide-react-native"
+import { ChevronLeft, Dumbbell, Play, Trash2, FileText } from "lucide-react-native"
 
 export default function WorkoutDetailScreen() {
   const router = useRouter()
   const { id } = useLocalSearchParams<{ id: string }>()
   const { workouts, addLog, removeWorkout } = useWorkoutContext()
-  
+
   // Find the workout by ID
   const workout = workouts.find((w) => w.id === id)
-  
+
   if (!workout) {
     return (
       <SafeAreaView style={styles.container}>
@@ -40,30 +30,27 @@ export default function WorkoutDetailScreen() {
     )
   }
 
-  // Start this workout (log it for today)
+  // Start this workout (navigate to workout session)
   const startWorkout = () => {
-    const today = new Date().toISOString().split("T")[0]
-    addLog({ date: today, workoutId: workout.id })
-    Alert.alert("Workout Started", "This workout has been logged for today!")
+    router.push({
+      pathname: "/workout-session",
+      params: { workoutId: workout.id },
+    })
   }
 
   // Delete this workout
   const handleDelete = () => {
-    Alert.alert(
-      "Delete Workout",
-      "Are you sure you want to delete this workout? This action cannot be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Delete", 
-          style: "destructive",
-          onPress: () => {
-            removeWorkout(workout.id)
-            router.back()
-          }
-        }
-      ]
-    )
+    Alert.alert("Delete Workout", "Are you sure you want to delete this workout? This action cannot be undone.", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: () => {
+          removeWorkout(workout.id)
+          router.back()
+        },
+      },
+    ])
   }
 
   return (
@@ -91,7 +78,7 @@ export default function WorkoutDetailScreen() {
 
         <View style={styles.exercisesContainer}>
           <Text style={styles.sectionTitle}>EXERCISES</Text>
-          
+
           {workout.exercises.map((exercise, index) => (
             <View key={index} style={styles.exerciseCard}>
               <View style={styles.exerciseHeader}>
@@ -110,6 +97,16 @@ export default function WorkoutDetailScreen() {
                   <Text style={styles.detailValue}>{exercise.reps}</Text>
                 </View>
               </View>
+
+              {exercise.notes && (
+                <View style={styles.notesContainer}>
+                  <View style={styles.notesHeader}>
+                    <FileText size={14} color="#a0a0a0" />
+                    <Text style={styles.notesLabel}>NOTES</Text>
+                  </View>
+                  <Text style={styles.notesText}>{exercise.notes}</Text>
+                </View>
+              )}
             </View>
           ))}
         </View>
@@ -233,6 +230,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#2a2a2a",
     borderRadius: 8,
     overflow: "hidden",
+    marginBottom: 12,
   },
   detailItem: {
     flex: 1,
@@ -250,6 +248,27 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#ffffff",
+  },
+  notesContainer: {
+    backgroundColor: "#2a2a2a",
+    borderRadius: 8,
+    padding: 12,
+  },
+  notesHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  notesLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#a0a0a0",
+    marginLeft: 4,
+  },
+  notesText: {
+    fontSize: 14,
+    color: "#ffffff",
+    lineHeight: 20,
   },
   footer: {
     padding: 20,
@@ -281,3 +300,4 @@ const styles = StyleSheet.create({
     color: "#ffffff",
   },
 })
+

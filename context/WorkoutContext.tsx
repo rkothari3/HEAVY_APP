@@ -9,6 +9,8 @@ export interface Exercise {
   name: string
   sets: number
   reps: number
+  // Added optional notes property to support exercise notes
+  notes?: string
 }
 
 export interface Workout {
@@ -20,6 +22,12 @@ export interface Workout {
 export interface WorkoutLog {
   date: string
   workoutId: string
+  // Added optional exerciseData to support logging details
+  exerciseData?: {
+    exerciseIndex: number
+    sets: { reps: number; weight: number }[]
+    notes?: string
+  }[]
 }
 
 interface WorkoutContextType {

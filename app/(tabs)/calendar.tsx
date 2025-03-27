@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, StatusBar, Alert } from "react-native"
 import { Calendar } from "react-native-calendars"
 import { useWorkoutContext } from "@/context/WorkoutContext"
-import { ChevronLeft, Dumbbell, Trash2 } from "lucide-react-native"
+import { ChevronLeft, Dumbbell } from "lucide-react-native"
 import { useRouter } from "expo-router"
 
 export default function CalendarScreen() {
@@ -56,25 +56,6 @@ export default function CalendarScreen() {
     if (!dateString) return ""
     const date = new Date(dateString)
     return date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })
-  }
-
-  // Add a function to delete a workout log
-  const deleteWorkoutLog = (logIndex: number) => {
-    const log = selectedLogs[logIndex]
-    Alert.alert("Delete Workout Log", "Are you sure you want to delete this workout log?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: () => {
-          // We need to modify our context to handle log deletion
-          const updatedLogs = logs.filter((l, idx) => !(l.date === log.date && l.workoutId === log.workoutId))
-          // This is a workaround since we don't have a removeLog function in context
-          // In a real app, you'd add a removeLog function to the context
-          setLogs(updatedLogs)
-        },
-      },
-    ])
   }
 
   return (
@@ -138,9 +119,6 @@ export default function CalendarScreen() {
                         <Text style={styles.logTitle}>{workout ? workout.name : "Unknown Workout"}</Text>
                         <Text style={styles.logTime}>Completed</Text>
                       </View>
-                      <TouchableOpacity style={styles.completeBadge} onPress={() => deleteWorkoutLog(index)}>
-                        <Trash2 size={16} color="#ff3a38" />
-                      </TouchableOpacity>
                     </View>
                   )
                 })}
@@ -237,14 +215,6 @@ const styles = StyleSheet.create({
   logTime: {
     fontSize: 13,
     color: "#a0a0a0",
-  },
-  completeBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#2a2a2a",
-    justifyContent: "center",
-    alignItems: "center",
   },
   emptyLogsContainer: {
     alignItems: "center",

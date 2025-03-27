@@ -13,10 +13,17 @@ import {
   Platform,
   ScrollView,
 } from "react-native"
-import { useWorkoutContext, type Exercise, type Workout } from "../context/WorkoutContext"
+import { useWorkoutContext, type Workout } from "../context/WorkoutContext"
 import { useRouter } from "expo-router"
 import uuid from "react-native-uuid"
-import { ChevronLeft, Plus, Save, X, Dumbbell } from "lucide-react-native"
+import { ChevronLeft, Plus, Save, X, Dumbbell, FileText } from "lucide-react-native"
+
+export type Exercise = {
+  name: string
+  sets: number
+  reps: number
+  notes?: string // Added optional 'notes' property
+}
 
 export default function CreateWorkoutScreen() {
   const [name, setName] = useState("")
@@ -26,7 +33,7 @@ export default function CreateWorkoutScreen() {
 
   // Add a new empty exercise
   const addExercise = () => {
-    setExercises([...exercises, { name: "", sets: 0, reps: 0 }])
+    setExercises([...exercises, { name: "", sets: 0, reps: 0, notes: "" }])
   }
 
   // Update an exercise field
@@ -139,6 +146,22 @@ export default function CreateWorkoutScreen() {
                       style={styles.numberInput}
                     />
                   </View>
+                </View>
+
+                <View style={styles.notesContainer}>
+                  <View style={styles.notesHeader}>
+                    <FileText size={14} color="#a0a0a0" />
+                    <Text style={styles.notesLabel}>NOTES</Text>
+                  </View>
+                  <TextInput
+                    placeholder="Add notes about this exercise..."
+                    placeholderTextColor="#666"
+                    value={exercise.notes}
+                    onChangeText={(text) => updateExercise(index, "notes", text)}
+                    style={styles.notesInput}
+                    multiline={true}
+                    numberOfLines={3}
+                  />
                 </View>
               </View>
             ))}
@@ -273,6 +296,7 @@ const styles = StyleSheet.create({
   exerciseDetails: {
     flexDirection: "row",
     justifyContent: "space-between",
+    marginBottom: 12,
   },
   detailInput: {
     flex: 1,
@@ -291,6 +315,29 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontSize: 15,
     textAlign: "center",
+  },
+  notesContainer: {
+    marginTop: 4,
+  },
+  notesHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  notesLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#a0a0a0",
+    marginLeft: 4,
+  },
+  notesInput: {
+    backgroundColor: "#2a2a2a",
+    borderRadius: 8,
+    padding: 12,
+    color: "#ffffff",
+    fontSize: 14,
+    textAlignVertical: "top",
+    minHeight: 80,
   },
   addExerciseButton: {
     flexDirection: "row",
