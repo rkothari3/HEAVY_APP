@@ -1,88 +1,116 @@
-// test_app/context/WorkoutContext.tsx
-import { createContext, useContext, useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+"use client"
 
-// Define what a workout and log look like
+import type React from "react"
+import { createContext, useContext, useState, useEffect } from "react"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+
+// Define types
 export interface Exercise {
-  name: string;  // e.g., "Push-up"
-  sets: number;  // e.g., 3
-  reps: number;  // e.g., 10
+  name: string
+  sets: number
+  reps: number
 }
 
 export interface Workout {
-  id: string;    // Unique ID
-  name: string;  // e.g., "Upper Body"
-  exercises: Exercise[];
+  id: string
+  name: string
+  exercises: Exercise[]
 }
 
 export interface WorkoutLog {
-  date: string;  // e.g., "2023-10-01"
-  workoutId: string;
+  date: string
+  workoutId: string
 }
 
-// Define the context's shape
 interface WorkoutContextType {
-  workouts: Workout[];
-  logs: WorkoutLog[];
-  addWorkout: (workout: Workout) => void;
-  addLog: (log: WorkoutLog) => void;
+  workouts: Workout[]
+  logs: WorkoutLog[]
+  addWorkout: (workout: Workout) => void
+  removeWorkout: (workoutId: string) => void
+  addLog: (log: WorkoutLog) => void
+  setLogs: (logs: WorkoutLog[] | ((prevLogs: WorkoutLog[]) => WorkoutLog[])) => void // Update type
 }
 
-const WorkoutContext = createContext<WorkoutContextType | undefined>(undefined);
-
-// Hook to use the context
-export const useWorkoutContext = () => {
-  const context = useContext(WorkoutContext);
-  if (!context) {
-    throw new Error('useWorkoutContext must be used within a WorkoutProvider');
-  }
-  return context;
-};
+// Create context
+const WorkoutContext = createContext<WorkoutContextType | undefined>(undefined)
 
 // Provider component
-export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [workouts, setWorkouts] = useState<Workout[]>([]);
-  const [logs, setLogs] = useState<WorkoutLog[]>([]);
+export function WorkoutProvider({ children }: { children: React.ReactNode }) {
+  const [workouts, setWorkouts] = useState<Workout[]>([])
+  const [logs, setLogs] = useState<WorkoutLog[]>([])
 
-  // Load data from AsyncStorage when the app starts
+  // Load data from storage on mount
   useEffect(() => {
     const loadData = async () => {
       try {
-        const storedWorkouts = await AsyncStorage.getItem('workouts');
-        const storedLogs = await AsyncStorage.getItem('logs');
-        if (storedWorkouts) setWorkouts(JSON.parse(storedWorkouts));
-        if (storedLogs) setLogs(JSON.parse(storedLogs));
-      } catch (error) {
-        console.error('Failed to load data', error);
-      }
-    };
-    loadData();
-  }, []);
+        const workoutsData = await AsyncStorage.getItem("workouts")
+        const logsData = await AsyncStorage.getItem("logs")
 
-  // Save data to AsyncStorage when it changes
+        if (workoutsData) {
+          setWorkouts(JSON.parse(workoutsData))
+        }
+
+        if (logsData) {
+          setLogs(JSON.parse(logsData))
+        }
+      } catch (error) {
+        console.error("Error loading data:", error)
+      }
+    }
+
+    loadData()
+  }, [])
+
+  // Save data to storage whenever it changes
   useEffect(() => {
     const saveData = async () => {
       try {
-        await AsyncStorage.setItem('workouts', JSON.stringify(workouts));
-        await AsyncStorage.setItem('logs', JSON.stringify(logs));
+        await AsyncStorage.setItem("workouts", JSON.stringify(workouts))
+        await AsyncStorage.setItem("logs", JSON.stringify(logs))
       } catch (error) {
-        console.error('Failed to save data', error);
+        console.error("Error saving data:", error)
       }
-    };
-    saveData();
-  }, [workouts, logs]);
+    }
 
+    saveData()
+  }, [workouts, logs])
+
+  // Add a new workout
   const addWorkout = (workout: Workout) => {
-    setWorkouts([...workouts, workout]);
-  };
+    setWorkouts([...workouts, workout])
+  }
 
+  // Remove a workout
+  const removeWorkout = (workoutId: string) => {
+    setWorkouts(workouts.filter((workout) => workout.id !== workoutId))
+    // Also remove any logs associated with this workout
+    setLogs(logs.filter((log) => log.workoutId !== workoutId))
+  }
+
+  // Add a workout log
   const addLog = (log: WorkoutLog) => {
-    setLogs([...logs, log]);
-  };
+    // Check if this workout is already logged for this date
+    const exists = logs.some((existingLog) => existingLog.date === log.date && existingLog.workoutId === log.workoutId)
 
+    if (!exists) {
+      setLogs([...logs, log])
+    }
+  }
+
+  // Update the provider return value to include setLogs
   return (
-    <WorkoutContext.Provider value={{ workouts, logs, addWorkout, addLog }}>
+    <WorkoutContext.Provider value={{ workouts, logs, addWorkout, removeWorkout, addLog, setLogs }}>
       {children}
     </WorkoutContext.Provider>
-  );
-};
+  )
+}
+
+// Custom hook to use the workout context
+export function useWorkoutContext() {
+  const context = useContext(WorkoutContext)
+  if (context === undefined) {
+    throw new Error("useWorkoutContext must be used within a WorkoutProvider")
+  }
+  return context
+}
+

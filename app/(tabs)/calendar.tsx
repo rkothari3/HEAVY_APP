@@ -1,154 +1,271 @@
-// import { StyleSheet, Image, Platform } from 'react-native';
+"use client"
 
-// import { Collapsible } from '@/components/Collapsible';
-// import { ExternalLink } from '@/components/ExternalLink';
-// import ParallaxScrollView from '@/components/ParallaxScrollView';
-// import { ThemedText } from '@/components/ThemedText';
-// import { ThemedView } from '@/components/ThemedView';
-// import { IconSymbol } from '@/components/ui/IconSymbol';
-
-// export default function TabTwoScreen() {
-//   return (
-//     <ParallaxScrollView
-//       headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-//       headerImage={
-//         <IconSymbol
-//           size={310}
-//           color="#808080"
-//           name="chevron.left.forwardslash.chevron.right"
-//           style={styles.headerImage}
-//         />
-//       }>
-//       <ThemedView style={styles.titleContainer}>
-//         <ThemedText type="title">Explore</ThemedText>
-//       </ThemedView>
-//       <ThemedText>This app includes example code to help you get started.</ThemedText>
-//       <Collapsible title="File-based routing">
-//         <ThemedText>
-//           This app has two screens:{' '}
-//           <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-//           <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-//         </ThemedText>
-//         <ThemedText>
-//           The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-//           sets up the tab navigator.
-//         </ThemedText>
-//         <ExternalLink href="https://docs.expo.dev/router/introduction">
-//           <ThemedText type="link">Learn more</ThemedText>
-//         </ExternalLink>
-//       </Collapsible>
-//       <Collapsible title="Android, iOS, and web support">
-//         <ThemedText>
-//           You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-//           <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-//         </ThemedText>
-//       </Collapsible>
-//       <Collapsible title="Images">
-//         <ThemedText>
-//           For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-//           <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-//           different screen densities
-//         </ThemedText>
-//         <Image source={require('@/assets/images/react-logo.png')} style={{ alignSelf: 'center' }} />
-//         <ExternalLink href="https://reactnative.dev/docs/images">
-//           <ThemedText type="link">Learn more</ThemedText>
-//         </ExternalLink>
-//       </Collapsible>
-//       <Collapsible title="Custom fonts">
-//         <ThemedText>
-//           Open <ThemedText type="defaultSemiBold">app/_layout.tsx</ThemedText> to see how to load{' '}
-//           <ThemedText style={{ fontFamily: 'SpaceMono' }}>
-//             custom fonts such as this one.
-//           </ThemedText>
-//         </ThemedText>
-//         <ExternalLink href="https://docs.expo.dev/versions/latest/sdk/font">
-//           <ThemedText type="link">Learn more</ThemedText>
-//         </ExternalLink>
-//       </Collapsible>
-//       <Collapsible title="Light and dark mode components">
-//         <ThemedText>
-//           This template has light and dark mode support. The{' '}
-//           <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-//           what the user's current color scheme is, and so you can adjust UI colors accordingly.
-//         </ThemedText>
-//         <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-//           <ThemedText type="link">Learn more</ThemedText>
-//         </ExternalLink>
-//       </Collapsible>
-//       <Collapsible title="Animations">
-//         <ThemedText>
-//           This template includes an example of an animated component. The{' '}
-//           <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-//           the powerful <ThemedText type="defaultSemiBold">react-native-reanimated</ThemedText>{' '}
-//           library to create a waving hand animation.
-//         </ThemedText>
-//         {Platform.select({
-//           ios: (
-//             <ThemedText>
-//               The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-//               component provides a parallax effect for the header image.
-//             </ThemedText>
-//           ),
-//         })}
-//       </Collapsible>
-//     </ParallaxScrollView>
-//   );
-// }
-
-// const styles = StyleSheet.create({
-//   headerImage: {
-//     color: '#808080',
-//     bottom: -90,
-//     left: -35,
-//     position: 'absolute',
-//   },
-//   titleContainer: {
-//     flexDirection: 'row',
-//     gap: 8,
-//   },
-// });
-
-
-// test_app/app/(tabs)/calendar.tsx
-import { useState } from 'react';
-import { View, Text } from 'react-native';
-import { Calendar } from 'react-native-calendars';
-import { useWorkoutContext } from '../../context/WorkoutContext';
+import { useState, useEffect } from "react"
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, StatusBar, Alert } from "react-native"
+import { Calendar } from "react-native-calendars"
+import { useWorkoutContext } from "@/context/WorkoutContext"
+import { ChevronLeft, Dumbbell, Trash2 } from "lucide-react-native"
+import { useRouter } from "expo-router"
 
 export default function CalendarScreen() {
-  const { logs, workouts } = useWorkoutContext();
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const router = useRouter()
+  const { logs, workouts, removeWorkout } = useWorkoutContext()
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const [currentMonth, setCurrentMonth] = useState("")
+  const [setLogs] = useState<any>([])
+
+  // Set today as the default selected date
+  useEffect(() => {
+    const today = new Date().toISOString().split("T")[0]
+    setSelectedDate(today)
+  }, [])
+
+  // Update month name when calendar changes
+  const onMonthChange = (month: { dateString: string }) => {
+    const date = new Date(month.dateString)
+    setCurrentMonth(date.toLocaleString("default", { month: "long", year: "numeric" }))
+  }
 
   // Mark dates with logs
-  const markedDates = logs.reduce((acc, log) => {
-    acc[log.date] = { marked: true, dotColor: 'blue' };
-    return acc;
-  }, {} as { [key: string]: { marked: boolean; dotColor: string } });
+  const markedDates = logs.reduce(
+    (acc, log) => {
+      acc[log.date] = {
+        marked: true,
+        dotColor: "#ff3a38",
+        selected: log.date === selectedDate,
+        selectedColor: log.date === selectedDate ? "rgba(255, 58, 56, 0.2)" : undefined,
+      }
+      return acc
+    },
+    {} as { [key: string]: any },
+  )
+
+  // Add selected date styling if it's not already in markedDates
+  if (selectedDate && !markedDates[selectedDate]) {
+    markedDates[selectedDate] = {
+      selected: true,
+      selectedColor: "rgba(255, 58, 56, 0.2)",
+    }
+  }
 
   // Get logs for the selected date
-  const selectedLogs = selectedDate ? logs.filter(log => log.date === selectedDate) : [];
+  const selectedLogs = selectedDate ? logs.filter((log) => log.date === selectedDate) : []
+
+  // Format date for display
+  const formatDisplayDate = (dateString: string) => {
+    if (!dateString) return ""
+    const date = new Date(dateString)
+    return date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })
+  }
+
+  // Add a function to delete a workout log
+  const deleteWorkoutLog = (logIndex: number) => {
+    const log = selectedLogs[logIndex]
+    Alert.alert("Delete Workout Log", "Are you sure you want to delete this workout log?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: () => {
+          // We need to modify our context to handle log deletion
+          const updatedLogs = logs.filter((l, idx) => !(l.date === log.date && l.workoutId === log.workoutId))
+          // This is a workaround since we don't have a removeLog function in context
+          // In a real app, you'd add a removeLog function to the context
+          setLogs(updatedLogs)
+        },
+      },
+    ])
+  }
 
   return (
-    <View style={{ flex: 1 }}>
-      <Calendar
-        markedDates={markedDates}
-        onDayPress={(day: { dateString: string }) => setSelectedDate(day.dateString)}
-      />
-      {selectedDate && (
-        <View style={{ padding: 20 }}>
-          <Text>Workouts on {selectedDate}:</Text>
-          {selectedLogs.length > 0 ? (
-            selectedLogs.map((log, index) => {
-              const workout = workouts.find(w => w.id === log.workoutId);
-              return (
-                <Text key={index}>{workout ? workout.name : 'Unknown Workout'}</Text>
-              );
-            })
-          ) : (
-            <Text>No workouts logged.</Text>
-          )}
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" />
+
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <ChevronLeft size={22} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>WORKOUT CALENDAR</Text>
+        <View style={{ width: 40 }} />
+      </View>
+
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.calendarContainer}>
+          <Calendar
+            theme={{
+              backgroundColor: "#121212",
+              calendarBackground: "#121212",
+              textSectionTitleColor: "#ffffff",
+              selectedDayBackgroundColor: "#ff3a38",
+              selectedDayTextColor: "#ffffff",
+              todayTextColor: "#ff3a38",
+              dayTextColor: "#ffffff",
+              textDisabledColor: "#444444",
+              dotColor: "#ff3a38",
+              selectedDotColor: "#ffffff",
+              arrowColor: "#ff3a38",
+              monthTextColor: "#ffffff",
+              indicatorColor: "#ff3a38",
+              textDayFontWeight: "400",
+              textMonthFontWeight: "700",
+              textDayHeaderFontWeight: "600",
+              textDayFontSize: 15,
+              textMonthFontSize: 16,
+              textDayHeaderFontSize: 13,
+            }}
+            markedDates={markedDates}
+            onDayPress={(day: { dateString: string }) => setSelectedDate(day.dateString)}
+            onMonthChange={onMonthChange}
+            enableSwipeMonths={true}
+            hideExtraDays={true}
+          />
         </View>
-      )}
-    </View>
-  );
+
+        {selectedDate && (
+          <View style={styles.logsContainer}>
+            <Text style={styles.dateHeader}>{formatDisplayDate(selectedDate)}</Text>
+
+            {selectedLogs.length > 0 ? (
+              <View style={styles.logsList}>
+                {selectedLogs.map((log, index) => {
+                  const workout = workouts.find((w) => w.id === log.workoutId)
+                  return (
+                    <View key={index} style={styles.logItem}>
+                      <View style={styles.logIconContainer}>
+                        <Dumbbell size={20} color="#fff" />
+                      </View>
+                      <View style={styles.logInfo}>
+                        <Text style={styles.logTitle}>{workout ? workout.name : "Unknown Workout"}</Text>
+                        <Text style={styles.logTime}>Completed</Text>
+                      </View>
+                      <TouchableOpacity style={styles.completeBadge} onPress={() => deleteWorkoutLog(index)}>
+                        <Trash2 size={16} color="#ff3a38" />
+                      </TouchableOpacity>
+                    </View>
+                  )
+                })}
+              </View>
+            ) : (
+              <View style={styles.emptyLogsContainer}>
+                <Text style={styles.emptyLogsText}>No workouts logged for this day</Text>
+                <TouchableOpacity style={styles.addWorkoutButton} onPress={() => router.push("/")}>
+                  <Text style={styles.addWorkoutButtonText}>GO TO WORKOUTS</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        )}
+      </ScrollView>
+    </SafeAreaView>
+  )
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#121212",
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#2a2a2a",
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#2a2a2a",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#ffffff",
+    letterSpacing: 1,
+  },
+  content: {
+    flex: 1,
+  },
+  calendarContainer: {
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#2a2a2a",
+  },
+  dateHeader: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#ffffff",
+    marginBottom: 16,
+  },
+  logsContainer: {
+    padding: 20,
+  },
+  logsList: {
+    marginTop: 8,
+  },
+  logItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#1e1e1e",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
+  logIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#ff3a38",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  logInfo: {
+    flex: 1,
+  },
+  logTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#ffffff",
+    marginBottom: 4,
+  },
+  logTime: {
+    fontSize: 13,
+    color: "#a0a0a0",
+  },
+  completeBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#2a2a2a",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyLogsContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 30,
+  },
+  emptyLogsText: {
+    fontSize: 16,
+    color: "#a0a0a0",
+    marginBottom: 16,
+  },
+  addWorkoutButton: {
+    backgroundColor: "#2a2a2a",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  addWorkoutButtonText: {
+    color: "#ffffff",
+    fontWeight: "600",
+    fontSize: 14,
+  },
+})
+
